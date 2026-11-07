@@ -30,6 +30,13 @@ public class PdfExtrator {
     private final int dpi;
     private final CloudflareD1Service d1Service;
 
+    // 1. Para os testes unitários (sem Cloudflare)
+    public PdfExtrator(int dpi) {
+        this.dpi = dpi;
+        this.d1Service = null;
+    }
+
+    // 2. Para a aplicação principal / Spring Boot (com Cloudflare)
     public PdfExtrator(int dpi, CloudflareD1Service d1Service) {
         this.dpi = dpi;
         this.d1Service = d1Service;
