@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header class="topo" th:fragment="topo">
+  <a class="marca" th:href="@{/}"><img th:src="@{/img/logo.png}" alt="Toki Sushi"></a>
+  <span class="topo-titulo">Faturas</span>
+</header>
+
+<ol class="passos" th:fragment="passos(ativo)" aria-label="Passos">
+  <li th:classappend="${ativo == 1 ? 'ativo' : (ativo > 1 ? 'feito' : '')}">
+    <span class="num" th:text="${ativo > 1 ? '✓' : '1'}">1</span>
+    <span><strong>Carregar</strong><small>Escolhe os PDFs das faturas</small></span>
+  </li>
+  <li th:classappend="${ativo == 2 ? 'ativo' : (ativo > 2 ? 'feito' : '')}">
+    <span class="num" th:text="${ativo > 2 ? '✓' : '2'}">2</span>
+    <span><strong>Rever</strong><small>Confirma o que foi lido</small></span>
+  </li>
+  <li th:classappend="${ativo == 3 ? 'ativo' : ''}">
+    <span class="num">3</span>
+    <span><strong>Descarregar</strong><small>Guarda os ficheiros Excel</small></span>
+  </li>
+</ol>
+
+<footer class="rodape" th:fragment="rodape">
+  Toki Sushi · As faturas são lidas e descartadas: nada fica guardado no servidor.
+</footer>
+
+</body>
+</html>

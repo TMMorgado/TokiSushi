@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rever faturas · Toki Sushi</title>
+  <link rel="icon" type="image/png" th:href="@{/img/favicon.png}">
+  <link rel="stylesheet" th:href="@{/estilo.css}">
+  <script th:src="@{/app.js}" defer></script>
+</head>
+<body>
+<header th:replace="~{fragmentos :: topo}"></header>
+<ol th:replace="~{fragmentos :: passos(2)}"></ol>
+
+<main class="conteudo">
+  <div class="titulo">
+    <h1>Confirma o que foi lido</h1>
+    <p>Compara cada fatura com a pré-visualização. As que precisam de atenção aparecem primeiro.</p>
+  </div>
+
+  <div class="vazio" th:if="${total == 0}">
+    <p>Não foi carregada nenhuma fatura.</p>
+    <a class="btn primario" th:href="@{/}">Voltar</a>
+  </div>
+
+  <div th:if="${total > 0}">
+    <div class="notificacao ok" th:if="${novas != null and novas > 0}">
+      <strong th:text="${novas == 1} ? 'Juntei 1 fatura nova.' : 'Juntei ' + ${novas} + ' faturas novas.'">Juntei 2 faturas novas.</strong>
+      <span>As que já estavam carregadas foram mantidas.</span>
+    </div>
+    <div class="notificacao atencao" th:if="${ignoradas != null and !ignoradas.isEmpty()}">
+      <strong th:text="${ignoradas.size() == 1} ? 'Ignorei 1 ficheiro repetido:' : 'Ignorei ' + ${ignoradas.size()} + ' ficheiros repetidos:'">Ignorei 1 ficheiro repetido:</strong>
+      <ul><li th:each="i : ${ignoradas}" th:text="${i}"></li></ul>
+      <span class="nota">Não entram duas vezes no Excel. Para substituir uma fatura, remove-a primeiro e volta a carregá-la.</span>
+    </div>
+
+    <section class="resumo">
+      <div><span class="rotulo">Faturas lidas</span><span class="valor-grande" th:text="${lidasTotal}">0</span></div>
+      <div th:classappend="${porRever > 0} ? 'atencao'"><span class="rotulo">Para rever</span><span class="valor-grande" th:text="${porRever}">0</span></div>
+      <div><span class="rotulo">Artigos</span><span class="valor-grande" th:text="${totalArtigos}">0</span></div>
+      <div><span class="rotulo">Valor total</span><span class="valor-grande" th:text="${#numbers.formatDecimal(totalValor, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'">0 €</span></div>
+    </section>
+
+    <div class="ferramentas">
+      <div class="filtros" th:if="${porRever > 0}">
+        <button type="button" class="chip ativo" data-filtro="todas">Todas</button>
+        <button type="button" class="chip" data-filtro="rever">Só para rever</button>
+      </div>
+      <form class="recomecar" th:action="@{/recomecar}" method="post"
+            onsubmit="return confirm('Limpar todas as faturas carregadas e recomeçar?')">
+        <button type="submit" class="link">Limpar tudo e recomeçar</button>
+      </form>
+    </div>
+
+    <article class="fatura" th:each="c : ${cartoes}"
+             th:classappend="${c.precisaRevisao()} ? 'rever' : 'ok'"
+             th:attr="data-estado=${c.precisaRevisao()} ? 'rever' : 'ok'">
+
+      <div>
+        <div class="miniatura" data-abrir role="button" tabindex="0"
+             th:if="${!c.pdf().previews().isEmpty()}"
+             th:attr="data-nome=${c.pdf().ficheiro()},aria-label='Ampliar a fatura ' + ${c.pdf().ficheiro()}">
+          <div class="recorte">
+            <img th:each="p, st : ${c.pdf().previews()}" th:src="${p}" alt="Pré-visualização da fatura"
+                 class="pagina" th:classappend="${st.first} ? 'primeira'">
+          </div>
+          <span class="paginas" th:if="${c.pdf().previews().size() > 1}" th:text="${c.pdf().previews().size()} + ' páginas'">2 páginas</span>
+          <span class="ver">Clica para ampliar</span>
+        </div>
+        <div class="sem-previa" th:if="${c.pdf().previews().isEmpty()}">PDF</div>
+      </div>
+
+      <div class="dados">
+        <div class="fatura-topo">
+          <div>
+            <span class="rotulo" th:text="${c.pdf().lida()} ? 'Fornecedor' : 'Ficheiro'">Fornecedor</span>
+            <h2 class="fornecedor" th:text="${c.pdf().lida()} ? ${c.fornecedor()} : ${c.pdf().ficheiro()}">Fornecedor</h2>
+            <p class="sub" th:if="${c.pdf().lida()}">
+              Fatura <span th:text="${c.pdf().fatura().numero()}">FT 1/1</span>
+              · <span th:text="${#temporals.format(c.pdf().fatura().data(), 'dd/MM/yyyy')}">01/01/2026</span>
+            </p>
+          </div>
+          <span class="selo">
+            <svg th:if="${!c.precisaRevisao()}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+            <svg th:if="${c.precisaRevisao()}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 17h.01"/></svg>
+            <span th:text="${c.precisaRevisao()} ? 'Rever' : 'Tudo certo'">Tudo certo</span>
+          </span>
+        </div>
+
+        <div class="numeros" th:if="${c.pdf().lida()}">
+          <div>
+            <span class="rotulo">Valor</span>
+            <span class="valor" th:text="${#numbers.formatDecimal(c.pdf().fatura().valorComSinal(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'">0 €</span>
+          </div>
+          <div>
+            <span class="rotulo">Estado</span>
+            <span class="pill" th:text="${c.pdf().pagamento().estado()}"
+                  th:classappend="${c.pdf().pagamento().estado() == 'PAGO' ? 'pago' : (c.pdf().pagamento().estado() == 'POR PAGAR' ? 'porpagar' : 'credito')}">PAGO</span>
+          </div>
+          <div>
+            <span class="rotulo">Dia de pagamento</span>
+            <span th:text="${c.pdf().pagamento().dia() != null} ? ${#temporals.format(c.pdf().pagamento().dia(), 'dd/MM/yyyy')} : '—'">—</span>
+          </div>
+        </div>
+
+        <details class="artigos" th:if="${!c.pdf().linhas().isEmpty()}">
+          <summary>Artigos lidos <span class="contagem" th:text="${c.pdf().linhas().size()}">0</span></summary>
+          <div class="tabela">
+            <table>
+              <thead><tr><th>Código</th><th>Artigo</th><th class="num">Qtd.</th><th>Un.</th><th class="num">Valor</th></tr></thead>
+              <tbody>
+                <tr th:each="l : ${c.pdf().linhas()}">
+                  <td th:text="${l.codigo()}"></td>
+                  <td th:text="${l.descricao()}"></td>
+                  <td class="num" th:text="${l.qtd().stripTrailingZeros().toPlainString().replace('.', ',')}"></td>
+                  <td th:text="${l.unidade()}"></td>
+                  <td class="num" th:text="${#numbers.formatDecimal(l.valor(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <ul class="avisos" th:if="${!c.avisos().isEmpty()}">
+          <li th:each="a : ${c.avisos()}" th:text="${a}"></li>
+        </ul>
+
+        <div class="pe-cartao">
+          <span class="ficheiro" th:if="${c.pdf().lida()}" th:text="${c.pdf().ficheiro()}">ficheiro.pdf</span>
+          <form th:action="@{/faturas/{id}/remover(id=${c.id()})}" method="post">
+            <button type="submit" class="link">Remover</button>
+          </form>
+        </div>
+      </div>
+    </article>
+
+    <div class="barra">
+      <p th:text="${temExcel} ? 'Está tudo certo? Descarrega os ficheiros.' : 'Nenhuma fatura foi lida.'">Está tudo certo?</p>
+      <div class="botoes">
+        <a class="btn secundario" th:href="@{/}">← Carregar mais</a>
+        <a class="btn primario" th:if="${temExcel}" th:href="@{/excel/faturas}">Excel das faturas</a>
+        <a class="btn primario" th:if="${temExcel}" th:href="@{/excel/artigos}">Excel dos artigos</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<dialog class="ampliar" id="ampliar">
+  <header><strong data-titulo>Fatura</strong><button type="button" class="fechar">Fechar</button></header>
+  <div class="folhas"></div>
+</dialog>
+
+<footer th:replace="~{fragmentos :: rodape}"></footer>
+</body>
+</html>
