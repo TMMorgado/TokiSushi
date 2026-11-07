@@ -1,5 +1,6 @@
 package faturas;
 
+import faturas.Service.CloudflareD1Service;
 import faturas.extracao.PdfExtrator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,7 +17,7 @@ public class FaturasApplication {
     }
 
     @Bean
-    PdfExtrator pdfExtrator(FaturasProperties props) {
-        return new PdfExtrator(props.renderDpi());
+    PdfExtrator pdfExtrator(FaturasProperties props, CloudflareD1Service d1) {
+        return new PdfExtrator(props.renderDpi(), d1);
     }
 }
