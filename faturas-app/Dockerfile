@@ -1,1 +1,19 @@
-# Usa uma imagem oficial do Java 17 (ou 21, conforme a versão que estejas a usar no teu projeto)FROM eclipse-temurin:17-jdk-jammy AS buildWORKDIR /app# Copia os ficheiros de configuração de build (Maven)mvnw pom.xml ./COPY .mvn .mvnCOPY mvnw pom.xml ./COPY src ./src# Compila o projeto em modo package (ignora testes para ser mais rápido)RUN ./mvnw clean package -DskipTests# Imagem final mais leve apenas para correr a aplicaçãoFROM eclipse-temurin:17-jre-jammyWORKDIR /app# Copia o jar gerado no passo anterior para a imagem finalCOPY --from=build /app/target/*.jar app.jar# O Render define a porta através de uma variável de ambiente PORT (por defeito 8080)ENV PORT=8080EXPOSE 8080# Arranca a aplicação Spring BootENTRYPOINT ["java", "-jar", "app.jar"]
+FROM eclipse-temurin:17-jdk-jammy AS build
+
+WORKDIR /app
+
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+COPY src ./src
+
+RUN ./mvnw clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+ENV PORT=8080
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
