@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Testes de ponta a ponta com faturas reais (ficheiros em src/test/resources/faturas). */
 class PdfExtratorTest {
 
-    private final PdfExtrator extrator = new PdfExtrator(300);
+    private final PdfExtrator extrator = new PdfExtrator(300,null);
 
     private ResultadoPdf ler(String nome) throws IOException {
         try (InputStream in = getClass().getResourceAsStream("/faturas/" + nome)) {
