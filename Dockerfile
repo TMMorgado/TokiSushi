@@ -1,13 +1,15 @@
-FROM eclipse-temurin:17-jdk-jammy AS build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-COPY .mvn .mvn
-COPY mvnw pom.xml ./
+# Copia o pom.xml e o código fonte
+COPY pom.xml ./
 COPY src ./src
 
-RUN ./mvnw clean package -DskipTests
+# Compila usando o Maven oficial instalado na imagem
+RUN mvn clean package -DskipTests
 
+# Imagem final leve apenas para correr a aplicação
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
